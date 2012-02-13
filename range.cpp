@@ -91,16 +91,18 @@ int main()
 	std::cout << is_random_range<decltype(b)>::value << std::endl;
 	std::cout << is_finite_range<decltype(b)>::value << std::endl;
 
-//    std::cout << "---" << std::endl;
-//    for (auto e: arange(a)) {
-//        std::cout << e << std::endl;
-//    }
-//    std::cout << "---" << std::endl;
-//    for (auto e: reverse(arange(a))) {
-//        std::cout << e << std::endl;
-//    }
-//    std::cout << "---" << std::endl;
-//    tuple<int, char, double> t;
+	std::cout << "---" << std::endl;
+	for (auto e: arange(a)) {
+		std::cout << e << std::endl;
+	}
+	std::cout << "---" << std::endl;
+	for (auto e: reverse(arange(a))) {
+		std::cout << e << std::endl;
+	}
+	std::cout << "---" << std::endl;
+	tuple<int, double> t(42);
+	std::cout << get<0>(t) << std::endl;
+	std::cout << get<1>(t) << std::endl;
 
 //    for (auto e: t) {
 //        std::cout << e << std::endl;
