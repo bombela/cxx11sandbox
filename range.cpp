@@ -132,7 +132,7 @@ int main()
 
 	std::cout << "e ---" << std::endl;
 	for (auto e: enumerate(b)) {
-		std::cout << e << std::endl;
+		std::cout << e << " /" << get<1>(e) << std::endl;
 	}
 	return 0;
 }
