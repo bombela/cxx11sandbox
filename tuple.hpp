@@ -8,6 +8,7 @@
 #ifndef TUPLE_H
 #define TUPLE_H
 
+#include <stdexcept>
 #include "variant.hpp"
 
 template <size_t I, typename T, typename... Ts>
@@ -22,6 +23,8 @@ class tuple<T, Ts...>: private tuple<Ts...> {
 
 	template <size_t, typename, typename...>
 	friend struct getter;
+	template <size_t, typename, typename...>
+	friend struct getter_runtime;
 
 	public:
 		tuple() = default;
@@ -65,5 +68,29 @@ typename tuple_elem<I, Ts...>::type get(tuple<Ts...>& t) {
 	return getter<I, Ts...>::get(t);
 }
 
+template <size_t I, typename T, typename... Ts>
+struct getter_runtime {
+	static variant get(size_t idx, tuple<T, Ts...>& t) {
+		if (idx == 0) {
+			return variant(t.value);
+		}
+		return getter_runtime<I-1, Ts...>::get(idx-1, t);
+	}
+};
+
+template <typename T, typename... Ts>
+struct getter_runtime<0, T, Ts...> {
+	static variant get(size_t idx, tuple<T, Ts...>& t) {
+		if (idx == 0) {
+			return variant(t.value);
+		}
+		throw std::out_of_range("tuple index out of bound");
+	}
+};
+
+template <typename... Ts>
+variant get_runtime(size_t idx, tuple<Ts...>& t) {
+	return getter_runtime<sizeof...(Ts)-1, Ts...>::get(idx, t);
+}
 
 #endif /* TUPLE_H */
