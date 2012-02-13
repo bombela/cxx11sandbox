@@ -56,6 +56,8 @@ class variant {
 
 		std::string str() const { return _holder->get_str(); }
 
+		bool empty() const { return not _holder; }
+
 	private:
 		struct place_holder {
 			virtual ~place_holder() {}

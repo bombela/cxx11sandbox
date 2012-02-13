@@ -50,13 +50,13 @@ struct __name { \
 template <typename T>
 DEF_IS_EXPR(is_forward_range, (
 		bool((*(U*)0).empty()),
-		(void)reinterpret_cast<const void*>((*(U*)0).front()),
+		(*(U*)0).front(),
 		(*(U*)0).pop_front()
 		), true)
 
 template <typename T>
 DEF_IS_EXPR(is_bidirectional_range, (
-		(void)reinterpret_cast<const void*>((*(U*)0).back()),
+		(*(U*)0).back(),
 		(*(U*)0).pop_back()
 		), is_forward_range<T>::value)
 

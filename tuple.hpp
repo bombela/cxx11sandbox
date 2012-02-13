@@ -70,7 +70,7 @@ typename tuple_elem<I, Ts...>::type get(tuple<Ts...>& t) {
 
 template <size_t I, typename T, typename... Ts>
 struct getter_runtime {
-	static variant get(size_t idx, tuple<T, Ts...>& t) {
+	static variant get(size_t idx, const tuple<T, Ts...>& t) {
 		if (idx == 0) {
 			return variant(t.value);
 		}
@@ -80,7 +80,7 @@ struct getter_runtime {
 
 template <typename T, typename... Ts>
 struct getter_runtime<0, T, Ts...> {
-	static variant get(size_t idx, tuple<T, Ts...>& t) {
+	static variant get(size_t idx, const tuple<T, Ts...>& t) {
 		if (idx == 0) {
 			return variant(t.value);
 		}
@@ -89,8 +89,52 @@ struct getter_runtime<0, T, Ts...> {
 };
 
 template <typename... Ts>
-variant get_runtime(size_t idx, tuple<Ts...>& t) {
+variant get_runtime(size_t idx, const tuple<Ts...>& t) {
 	return getter_runtime<sizeof...(Ts)-1, Ts...>::get(idx, t);
 }
+
+template <typename... Ts>
+struct tuple_range {
+		typedef tuple<Ts...> tuple_t;
+
+		tuple_range(const tuple_t& t): _t(t) {}
+
+		bool empty() const { return _e > _b; }
+
+		variant front() {
+			if (_front.empty())
+				_front = get_runtime(_b, _t);
+			return _front;
+		}
+
+		void pop_front() {
+			++_b;
+			_front = get_runtime(_b, _t);
+		}
+
+		variant back() {
+			if (_back.empty())
+				_back = get_runtime(_b, _t);
+			return _back;
+		}
+
+		void pop_back() {
+			++_b;
+			_back = get_runtime(_b, _t);
+		}
+
+		size_t length() const { return sizeof...(Ts); }
+
+		variant at(size_t idx) const { return get_runtime(idx, _t); }
+
+	private:
+		const tuple_t& _t;
+
+		size_t _b = 0;
+		size_t _e = sizeof...(Ts) -1;
+
+		variant _front;
+		variant _back;
+};
 
 #endif /* TUPLE_H */

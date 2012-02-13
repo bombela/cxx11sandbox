@@ -101,11 +101,11 @@ int main()
 	}
 	std::cout << "---" << std::endl;
 	tuple<int, double> t(42);
-	std::cout << get<0>(t) << std::endl;
-	std::cout << get<1>(t) << std::endl;
 
-	std::cout << get_runtime(0, t) << std::endl;
-	std::cout << get_runtime(1, t) << std::endl;
+	auto r = tuple_range<int, double>(t);
+	for (auto e: r) {
+		std::cout << e << std::endl;
+	}
 
 //    for (auto e: t) {
 //        std::cout << e << std::endl;
