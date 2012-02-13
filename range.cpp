@@ -105,10 +105,23 @@ int main()
 	std::cout << get<1>(t) << std::endl;
 
 	std::cout << "v ---" << std::endl;
-	variant v = std::string("lol");
-	std::cout << v.get<std::string>() << std::endl;
-	std::cout << v.str() << std::endl;
 
+	variant v(std::string("lol"));
+	std::cout << v.cast<std::string>() << std::endl;
+	std::cout << v.str() << std::endl;
+	variant v2 = v;
+	std::cout << v2.cast<std::string>() << std::endl;
+	std::cout << v2.str() << std::endl;
+	variant v3;
+	v3 = v2;
+	v3 = variant("pomme");
+	std::cout << v3.cast<const char*>() << std::endl;
+	std::cout << v3.str() << std::endl;
+	std::cout << v3 << std::endl;
+	variant v4(v3);
+	std::cout << v4.cast<const char*>() << std::endl;
+	std::cout << v4.str() << std::endl;
+	std::cout << v4 << std::endl;
 
 //    for (auto e: t) {
 //        std::cout << e << std::endl;
