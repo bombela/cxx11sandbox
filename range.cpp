@@ -104,6 +104,12 @@ int main()
 	std::cout << get<0>(t) << std::endl;
 	std::cout << get<1>(t) << std::endl;
 
+	std::cout << "v ---" << std::endl;
+	variant v = std::string("lol");
+	std::cout << v.get<std::string>() << std::endl;
+	std::cout << v.str() << std::endl;
+
+
 //    for (auto e: t) {
 //        std::cout << e << std::endl;
 //    }

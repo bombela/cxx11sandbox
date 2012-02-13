@@ -8,6 +8,8 @@
 #ifndef TUPLE_H
 #define TUPLE_H
 
+#include "variant.hpp"
+
 template <size_t I, typename T, typename... Ts>
 struct getter;
 

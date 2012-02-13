@@ -75,12 +75,6 @@ struct range_info {
 	typedef decltype(((R*)0)->front()) type;
 };
 
-template <bool C, typename T=void>
-struct enable_if {};
-
-template <typename T>
-struct enable_if<true, T> { typedef T type; };
-
 template <typename R>
 struct range_iterator {
 	R& r;
@@ -99,7 +93,7 @@ struct range_iterator {
 };
 
 template <typename R>
-typename enable_if<
+typename std::enable_if<
 	is_forward_range<R>::value,
 	range_iterator<R>
 >::type begin(R& r) {
@@ -107,7 +101,7 @@ typename enable_if<
 }
 
 template <typename R>
-typename enable_if<
+typename std::enable_if<
 	is_forward_range<R>::value,
 	range_iterator<R>
 >::type end(R& r) {
