@@ -11,8 +11,8 @@
 #include <stdexcept>
 #include "variant.hpp"
 
-template <size_t I, typename T, typename... Ts>
-struct getter;
+template <typename... Ts>
+struct tuple_range;
 
 template <typename... Ts>
 struct tuple {};
@@ -36,6 +36,10 @@ class tuple<T, Ts...>: private tuple<Ts...> {
 				static_assert(not (sizeof...(Us) > sizeof...(Ts)),
 						"Too much arguments for initialized tuple!");
 			}
+
+		tuple_range<T, Ts...> all() const {
+			return tuple_range<T, Ts...>(*this);
+		}
 };
 
 template <size_t I, typename T, typename... Ts>
@@ -99,7 +103,7 @@ struct tuple_range {
 
 		tuple_range(const tuple_t& t): _t(t) {}
 
-		bool empty() const { return _e > _b; }
+		bool empty() const { return _b > _e; }
 
 		variant front() {
 			if (_front.empty())
@@ -108,19 +112,19 @@ struct tuple_range {
 		}
 
 		void pop_front() {
+			_front = variant();
 			++_b;
-			_front = get_runtime(_b, _t);
 		}
 
 		variant back() {
 			if (_back.empty())
-				_back = get_runtime(_b, _t);
+				_back = get_runtime(_e, _t);
 			return _back;
 		}
 
 		void pop_back() {
-			++_b;
-			_back = get_runtime(_b, _t);
+			_front = variant();
+			--_b;
 		}
 
 		size_t length() const { return sizeof...(Ts); }
@@ -136,5 +140,10 @@ struct tuple_range {
 		variant _front;
 		variant _back;
 };
+
+template <typename... Ts>
+tuple<Ts...> make_tuple(Ts&&... values) {
+	return tuple<Ts...>(std::forward<Ts>(values)...);
+}
 
 #endif /* TUPLE_H */

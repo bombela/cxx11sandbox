@@ -84,6 +84,8 @@ struct Enumerator {
 
 int main()
 {
+	std::cout << std::boolalpha << std::endl;
+
 	int a[] = { 1, 2, 3, 4, 5 };
 	auto b = arange(a);
 	std::cout << is_forward_range<decltype(b)>::value << std::endl;
@@ -100,15 +102,16 @@ int main()
 		std::cout << e << std::endl;
 	}
 	std::cout << "---" << std::endl;
-	tuple<int, double> t(42);
+	tuple<int, double, const char*> t(42, 21.1, "super tuple");
 
-	auto r = tuple_range<int, double>(t);
-	for (auto e: r) {
+	for (auto e: t.all()) {
 		std::cout << e << std::endl;
 	}
 
-//    for (auto e: t) {
-//        std::cout << e << std::endl;
-//    }
+	std::cout << "n ---" << std::endl;
+
+	for (auto e: make_tuple(2, 'a', 22.3).all()) {
+		std::cout << e << std::endl;
+	}
 	return 0;
 }
