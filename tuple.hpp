@@ -29,13 +29,15 @@ class tuple<T, Ts...>: private tuple<Ts...> {
 	public:
 		tuple() = default;
 
-		template <typename U, typename... Us>
-		tuple(U&& value, Us&&... us):
-			tuple<Ts...>(std::forward<Us>(us)...),
-			value(std::forward<U>(value)) {
-				static_assert(not (sizeof...(Us) > sizeof...(Ts)),
-						"Too much arguments for initialized tuple!");
+		explicit tuple(T value, Ts... values):
+			tuple<Ts...>(std::forward<Ts>(values)...),
+			value(std::forward<T>(value)) {
 			}
+
+		tuple(const tuple& o):
+			tuple<Ts...>(o),
+			value(o.value)
+			{}
 
 		tuple_range<T, Ts...> all() const {
 			return tuple_range<T, Ts...>(*this);
@@ -144,6 +146,25 @@ struct tuple_range {
 template <typename... Ts>
 tuple<Ts...> make_tuple(Ts&&... values) {
 	return tuple<Ts...>(std::forward<Ts>(values)...);
+}
+
+template <typename... Ts>
+std::ostream& operator<<(std::ostream& os, const tuple<Ts...>& t)
+{
+	std::ostream::sentry init(os);
+	if (init) {
+		os << "tuple(";
+		bool first = true;
+		for (auto e: t.all()) {
+			if (first)
+				first = false;
+			else
+				os << ", ";
+			os << e.str();
+		}
+		os << ")";
+	}
+	return os;
 }
 
 #endif /* TUPLE_H */

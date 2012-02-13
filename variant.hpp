@@ -22,7 +22,7 @@ class variant {
 		variant() = default;
 
 		template <typename T>
-		variant(T&& value, typename std::enable_if<
+		explicit variant(T&& value, typename std::enable_if<
 			not std::is_same<typename std::decay<T>::type, variant>::value
 				>::type* = nullptr):
 			_holder(new holder<typename std::decay<T>::type>(

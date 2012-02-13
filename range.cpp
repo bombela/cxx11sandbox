@@ -64,11 +64,11 @@ struct Reverser {
 
 	bool empty() const { return _r.empty(); }
 	void pop_front() { _r.pop_back(); }
-	auto front() -> decltype(((R*)0)->back()) {
+	auto front() -> typename range_info<R>::type {
 		return _r.back();
 	}
 	void pop_back() { _r.pop_front(); }
-	auto back() -> decltype(((R*)0)->front()) {
+	auto back() -> typename range_info<R>::type {
 		return _r.front();
 	}
 
@@ -80,7 +80,22 @@ Reverser<R> reverse(R r) { return r; }
 
 template <typename R>
 struct Enumerator {
+	typedef tuple<size_t, typename range_info<R>::type> tuple_t;
+
+	Enumerator(R r): _r(r), _idx(0) {}
+
+	bool empty() const { return _r.empty(); }
+	void pop_front() { _r.pop_front(); ++_idx; }
+	tuple_t front() {
+		return tuple_t(_idx, _r.front());
+	}
+
+	R _r;
+	size_t _idx;
 };
+
+template <typename R>
+Enumerator<R> enumerate(R r) { return r; }
 
 int main()
 {
@@ -107,10 +122,16 @@ int main()
 	for (auto e: t.all()) {
 		std::cout << e << std::endl;
 	}
+	std::cout << t << std::endl;
 
 	std::cout << "n ---" << std::endl;
 
 	for (auto e: make_tuple(2, 'a', 22.3).all()) {
+		std::cout << e << std::endl;
+	}
+
+	std::cout << "e ---" << std::endl;
+	for (auto e: enumerate(b)) {
 		std::cout << e << std::endl;
 	}
 	return 0;
