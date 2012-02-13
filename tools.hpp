@@ -32,7 +32,7 @@ struct constit<T*> {
 	typedef const T* type;
 };
 
-#define DEF_IS_EXPR(__name, __expr) \
+#define DEF_IS_EXPR(__name, __expr, __and) \
 struct __name { \
 	typedef char yes; \
 	struct no { char _[2]; }; \
@@ -43,11 +43,32 @@ struct __name { \
 	static yes check(U*, swallow<sizeof (( __expr ))>* = 0); \
 	static no check(...); \
 \
-	static const bool value = sizeof check((T*)0) == sizeof (yes); \
+	static const bool value = \
+		((sizeof check((T*)0) == sizeof (yes)) and (__and)); \
 };
 
 template <typename T>
-DEF_IS_EXPR(is_forward_range, (*(T*)0).front() )
+DEF_IS_EXPR(is_forward_range, (
+		bool((*(U*)0).empty()),
+		(void)reinterpret_cast<const void*>((*(U*)0).front()),
+		(*(U*)0).pop_front()
+		), true)
+
+template <typename T>
+DEF_IS_EXPR(is_bidirectional_range, (
+		(void)reinterpret_cast<const void*>((*(U*)0).back()),
+		(*(U*)0).pop_back()
+		), is_forward_range<T>::value)
+
+template <typename T>
+DEF_IS_EXPR(is_random_range, (
+		(*(U*)0).at(42)
+		), is_forward_range<T>::value)
+
+template <typename T>
+DEF_IS_EXPR(is_finite_range, (
+		size_t((*(U*)0).length())
+		), is_forward_range<T>::value)
 
 template <typename R>
 struct range_info {

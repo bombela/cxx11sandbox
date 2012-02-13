@@ -21,6 +21,8 @@ struct ArrayRange {
 
 	T& at(size_t idx) { return _b[idx]; }
 
+	size_t length() const { return _e - _b; };
+
 	T* _b;
 	T* _e;
 };
@@ -85,8 +87,11 @@ int main()
 	int a[] = { 1, 2, 3, 4, 5 };
 	auto b = arange(a);
 	std::cout << is_forward_range<decltype(b)>::value << std::endl;
+	std::cout << is_bidirectional_range<decltype(b)>::value << std::endl;
+	std::cout << is_random_range<decltype(b)>::value << std::endl;
+	std::cout << is_finite_range<decltype(b)>::value << std::endl;
 
-
+//    std::cout << "---" << std::endl;
 //    for (auto e: arange(a)) {
 //        std::cout << e << std::endl;
 //    }
