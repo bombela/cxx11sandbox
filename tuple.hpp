@@ -17,14 +17,19 @@ struct tuple_range;
 template <typename... Ts>
 struct tuple {};
 
+template <typename F, typename T, typename... Ts>
+struct tuple_applier;
+
 template <typename T, typename... Ts>
 class tuple<T, Ts...>: private tuple<Ts...> {
 	T value;
 
 	template <size_t, typename, typename...>
-	friend struct getter;
+		friend struct getter;
 	template <size_t, typename, typename...>
-	friend struct getter_runtime;
+		friend struct getter_runtime;
+	template <typename, typename, typename...>
+		friend struct tuple_applier;
 
 	public:
 		tuple() = default;
@@ -54,6 +59,38 @@ template <typename T, typename... Ts>
 struct tuple_elem<0, T, Ts...> {
 	typedef T type;
 };
+
+template <typename F, typename T, typename... Ts>
+struct tuple_applier {
+	static void apply(tuple<T, Ts...>& t, F f) {
+		f(t.value);
+		tuple_applier<F, Ts...>::apply(t, f);
+	}
+	static void apply(const tuple<T, Ts...>& t, F f) {
+		f(t.value);
+		tuple_applier<F, Ts...>::apply(t, f);
+	}
+};
+
+template <typename F, typename T>
+struct tuple_applier<F, T> {
+	static void apply(tuple<T>& t, F f) {
+		f(t.value);
+	}
+	static void apply(const tuple<T>& t, F f) {
+		f(t.value);
+	}
+};
+
+template <typename... Ts, typename F>
+void tuple_apply(tuple<Ts...>& t, F f) {
+	tuple_applier<F, Ts...>::apply(t, f);
+}
+
+template <typename... Ts, typename F>
+void tuple_apply(const tuple<Ts...>& t, F f) {
+	tuple_applier<F, Ts...>::apply(t, f);
+}
 
 template <size_t I, typename T, typename... Ts>
 struct getter {
@@ -148,6 +185,20 @@ tuple<Ts...> make_tuple(Ts&&... values) {
 	return tuple<Ts...>(std::forward<Ts>(values)...);
 }
 
+struct tuple_elem_printer {
+	bool first = true;
+	std::ostream& os;
+	tuple_elem_printer(std::ostream& os): os(os) {}
+	template <typename T>
+		void operator()(const T& v) {
+			if (first)
+				first = false;
+			else
+				os << ", ";
+			os << v;
+		}
+};
+
 template <typename... Ts>
 std::ostream& operator<<(std::ostream& os, const tuple<Ts...>& t)
 {
@@ -155,13 +206,7 @@ std::ostream& operator<<(std::ostream& os, const tuple<Ts...>& t)
 	if (init) {
 		os << "tuple(";
 		bool first = true;
-		for (auto e: t.all()) {
-			if (first)
-				first = false;
-			else
-				os << ", ";
-			os << e.str();
-		}
+		tuple_apply(t, tuple_elem_printer(os));
 		os << ")";
 	}
 	return os;
