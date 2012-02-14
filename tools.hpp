@@ -40,7 +40,7 @@ struct __name { \
 	template <size_t> struct swallow {}; \
 \
 	template <typename U> \
-	static yes check(U*, swallow<sizeof (( __expr ))>* = 0); \
+	static yes check(U*, swallow<(( sizeof __expr ))>* = 0); \
 	static no check(...); \
 \
 	static const bool value = \
@@ -49,25 +49,25 @@ struct __name { \
 
 template <typename T>
 DEF_IS_EXPR(is_forward_range, (
-		bool((*(U*)0).empty()),
-		(*(U*)0).front(),
-		(*(U*)0).pop_front()
+		sizeof bool((*(U*)0).empty()),
+		sizeof (*(U*)0).front(),
+		sizeof (*(U*)0).pop_front()
 		), true)
 
 template <typename T>
 DEF_IS_EXPR(is_bidirectional_range, (
-		(*(U*)0).back(),
-		(*(U*)0).pop_back()
+		sizeof (*(U*)0).back(),
+		sizeof (*(U*)0).pop_back()
 		), is_forward_range<T>::value)
 
 template <typename T>
 DEF_IS_EXPR(is_random_range, (
-		(*(U*)0).at(42)
+		sizeof (*(U*)0).at(42)
 		), is_forward_range<T>::value)
 
 template <typename T>
 DEF_IS_EXPR(is_finite_range, (
-		size_t((*(U*)0).length())
+		sizeof size_t((*(U*)0).length())
 		), is_forward_range<T>::value)
 
 template <typename R>

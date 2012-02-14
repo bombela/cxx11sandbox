@@ -103,10 +103,20 @@ int main()
 
 	int a[] = { 1, 2, 3, 4, 5 };
 	auto b = arange(a);
-	std::cout << is_forward_range<decltype(b)>::value << std::endl;
-	std::cout << is_bidirectional_range<decltype(b)>::value << std::endl;
-	std::cout << is_random_range<decltype(b)>::value << std::endl;
-	std::cout << is_finite_range<decltype(b)>::value << std::endl;
+	static_assert(is_forward_range<decltype(b)>::value,
+			"is_forward_range");
+	static_assert(is_bidirectional_range<decltype(b)>::value,
+			"is_bidirectional_range");
+	static_assert(is_random_range<decltype(b)>::value,
+			"is_random_range");
+	static_assert(is_finite_range<decltype(b)>::value,
+			"is_finite_range");
+
+	std::cout << "---" << std::endl;
+	while (not b.empty()) {
+		std::cout << b.front() << std::endl;
+		b.pop_front();
+	}
 
 	std::cout << "---" << std::endl;
 	for (auto e: arange(a)) {
@@ -131,7 +141,7 @@ int main()
 	}
 
 	std::cout << "e ---" << std::endl;
-	for (auto e: enumerate(b)) {
+	for (auto e: enumerate(arange(a))) {
 		std::cout << e << " /" << get<1>(e) << std::endl;
 	}
 	return 0;
