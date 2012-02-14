@@ -20,6 +20,9 @@ struct tuple {};
 template <typename F, typename T, typename... Ts>
 struct tuple_applier;
 
+template <size_t I, typename F, typename T, typename R>
+struct tuple_mapper;
+
 template <typename T, typename... Ts>
 class tuple<T, Ts...>: private tuple<Ts...> {
 	T value;
@@ -30,6 +33,8 @@ class tuple<T, Ts...>: private tuple<Ts...> {
 		friend struct getter_runtime;
 	template <typename, typename, typename...>
 		friend struct tuple_applier;
+	template <size_t, typename, typename, typename>
+		friend struct tuple_mapper;
 
 	public:
 		tuple() = default;
@@ -90,6 +95,35 @@ void tuple_apply(tuple<Ts...>& t, F f) {
 template <typename... Ts, typename F>
 void tuple_apply(const tuple<Ts...>& t, F f) {
 	tuple_applier<F, Ts...>::apply(t, f);
+}
+
+template <size_t I, typename F, typename T, typename R>
+struct tuple_mapper;
+
+template <size_t I, typename F,
+		 typename T, typename... Ts,
+		 typename R, typename... Rs>
+struct tuple_mapper<I, F, tuple<T, Ts...>, tuple<R, Rs...>> {
+	static void map(const tuple<T, Ts...>& t, tuple<R, Rs...>& r, F f) {
+		r.value = f(t.value);
+		tuple_mapper<I-1, F, tuple<Ts...>, tuple<Rs...>>::map(t, r, f);
+	}
+};
+
+template <typename F, typename T, typename R>
+struct tuple_mapper<0, F, tuple<T>, tuple<R>> {
+	static void map(const tuple<T>& t, tuple<R>& r, F f) {
+		r.value = f(t.value);
+	}
+};
+
+template <typename... Rs, typename F, typename... Ts>
+tuple<Rs...> tuple_map(const tuple<Ts...>& t, F f) {
+	static_assert(sizeof...(Rs) == sizeof...(Ts),
+			"tuple must be of same size");
+	tuple<Rs...> r;
+	tuple_mapper<sizeof...(Rs)-1, F, tuple<Ts...>, tuple<Rs...>>::map(t, r, f);
+	return r;
 }
 
 template <size_t I, typename T, typename... Ts>
@@ -205,7 +239,6 @@ std::ostream& operator<<(std::ostream& os, const tuple<Ts...>& t)
 	std::ostream::sentry init(os);
 	if (init) {
 		os << "tuple(";
-		bool first = true;
 		tuple_apply(t, tuple_elem_printer(os));
 		os << ")";
 	}

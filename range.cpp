@@ -97,6 +97,53 @@ struct Enumerator {
 template <typename R>
 Enumerator<R> enumerate(R r) { return r; }
 
+template <typename... Rs>
+struct Zipper {
+	typedef tuple<Rs...> ranges_t;
+	typedef tuple<typename range_info<Rs>::type...> type_t;
+
+	ranges_t ranges;
+
+	Zipper(Rs... rs): ranges(rs...) {}
+
+
+	bool empty() const {
+		struct {
+			bool empty = false;
+			template <typename T>
+				void operator()(const T& v) {
+					if (v.empty())
+						empty = true;
+				}
+		} _;
+		tuple_apply(ranges, _);
+		return _.empty;
+	}
+
+//    type_t front() {
+//        struct {
+//            template <typename T>
+//                void operator()(T& v) {
+//                    v.pop_front();
+//                }
+//        } _;
+//        tuple_apply(ranges, _);
+//    }
+
+	void pop_front() {
+		struct {
+			template <typename T>
+				void operator()(T& v) {
+					v.pop_front();
+				}
+		} _;
+		tuple_apply(ranges, _);
+	}
+};
+
+template <typename... Rs>
+Zipper<Rs...> zip(Rs... rs) { return Zipper<Rs...>(rs...); }
+
 int main()
 {
 	std::cout << std::boolalpha << std::endl;
@@ -144,5 +191,22 @@ int main()
 	for (auto e: enumerate(arange(a))) {
 		std::cout << e << " /" << get<1>(e) << std::endl;
 	}
+
+	std::cout << "z ---" << std::endl;
+//    for (auto e: zip(arange(a))) {
+//        std::cout << e << std::endl;
+//    }
+
+	struct mul {
+		template <typename T>
+			int operator()(const T& v) const {
+				return v;
+			}
+		int operator()(const char*) const {
+			return -1;
+		}
+	};
+	auto r = tuple_map<int, int, int>(t, mul());
+	std::cout << r << std::endl;
 	return 0;
 }
