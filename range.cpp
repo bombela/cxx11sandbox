@@ -222,7 +222,7 @@ int main()
 //        std::cout << e << std::endl;
 //    }
 
-	V aa[] = { 1, 2, 3, 4, 5 };
+	V aa[] = { 1, 2, 3, 4 };
 	std::cout << "e ---" << std::endl;
 	for (auto e: enumerate(arange(aa))) {
 		std::cout << e << " /" << get<1>(e) << std::endl;
@@ -243,8 +243,9 @@ int main()
 		std::cout << e << std::endl;
 	}
 
+	int a2[] = { 11, 12, 13, 14, 15, 16, 17 };
 	std::cout << "z2 ---" << std::endl;
-	for (auto e: enumerate(zip(arange(a), reverse(arange(a))))) {
+	for (auto e: enumerate(zip(arange(a), arange(a2)))) {
 		std::cout << e << std::endl;
 	}
 
