@@ -32,6 +32,9 @@ struct tuple_range;
 template <typename F, typename T, typename... Ts>
 struct tuple_foreach_impl;
 
+template <typename F, typename T, typename... Ts>
+struct tuple_reduce_impl;
+
 template <typename T, typename... Ts>
 class tuple<T, Ts...>: private tuple<Ts...> {
 	T value;
@@ -44,6 +47,8 @@ class tuple<T, Ts...>: private tuple<Ts...> {
 		friend struct getter_runtime;
 	template <typename, typename, typename...>
 		friend struct tuple_foreach_impl;
+	template <typename, typename, typename...>
+		friend struct tuple_reduce_impl;
 
 	public:
 		tuple() = default;
@@ -111,6 +116,41 @@ void tuple_foreach(tuple<Ts...>& t, F f) {
 template <typename... Ts, typename F>
 void tuple_foreach(const tuple<Ts...>& t, F f) {
 	tuple_foreach_impl<F, Ts...>::apply(t, f);
+}
+
+template <typename F, typename T, typename... Ts>
+struct tuple_reduce_impl {
+	static auto apply(F f, const tuple<T, Ts...>& t) ->
+		decltype(tuple_reduce_impl<F, Ts...>::apply(f, t.value, t)) {
+			return tuple_reduce_impl<F, Ts...>::apply(f, t.value, t);
+		}
+
+	template <typename V>
+		static auto apply(F f, V v, const tuple<T, Ts...>& t) ->
+			decltype(tuple_reduce_impl<F, Ts...>::apply(f, f(v, t.value), t)) {
+			return tuple_reduce_impl<F, Ts...>::apply(f, f(v, t.value), t);
+		}
+};
+
+template <typename F, typename T>
+struct tuple_reduce_impl<F, T> {
+
+	static auto apply(F f, const tuple<T>& t) ->
+		decltype(t.value) {
+			return t.value;
+		}
+
+	template <typename V>
+		static auto apply(F f, V v, const tuple<T>& t) ->
+			decltype(f(v, t.value)) {
+			return f(v, t.value);
+		}
+};
+
+template <typename F, typename... Ts>
+auto tuple_reduce(F f, const tuple<Ts...>& t) ->
+	decltype(tuple_reduce_impl<F, Ts...>::apply(f, t)) {
+	return tuple_reduce_impl<F, Ts...>::apply(f, t);
 }
 
 template <size_t I, typename T, typename... Ts>

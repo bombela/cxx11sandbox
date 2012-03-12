@@ -240,10 +240,29 @@ int main()
 	}
 
 	std::cout << "z ---" << std::endl;
-	auto r = zip(arange(a), reverse(arange(a)));
-	for (auto e: zip(arange(a))) {
-		std::cout << e << std::endl;
-	}
+	auto t = ::make_tuple(1, 2.22, std::string("coucou"));
+	std::cout << t << " " << TN(t) << std::endl;
+
+	struct {
+		template <typename A, typename B>
+			int operator()(A a, B b) {
+				std::cout << a << " - " << b << std::endl;
+				return a + b;
+			}
+		template <typename A>
+			int operator()(A a, std::string b) {
+				std::cout << a << " - " << b << std::endl;
+				return a + 42;
+			}
+	} reducer;
+
+	auto r = tuple_reduce(reducer, t);
+	std::cout << r << " " << TN(r) << std::endl;
+
+//    auto r = zip(arange(a), reverse(arange(a)));
+//    for (auto e: zip(arange(a))) {
+//        std::cout << e << std::endl;
+//    }
 	std::cout << "= ---" << std::endl;
 	return 0;
 }
