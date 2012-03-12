@@ -11,43 +11,59 @@
 #include <stdexcept>
 #include "variant.hpp"
 
+struct tuple_map_tag_t {} tuple_map_tag;
+
+template <typename... Ts>
+class tuple;
+
+template <>
+class tuple<> {
+	template <typename...>
+		friend class tuple;
+
+	explicit tuple() {}
+	template <typename F>
+		explicit tuple(tuple_map_tag_t, F, tuple<>) {}
+};
+
 template <typename... Ts>
 struct tuple_range;
 
-template <typename... Ts>
-struct tuple {};
-
 template <typename F, typename T, typename... Ts>
-struct tuple_applier;
-
-template <size_t I, typename F, typename T, typename R>
-struct tuple_mapper;
+struct tuple_foreach_impl;
 
 template <typename T, typename... Ts>
 class tuple<T, Ts...>: private tuple<Ts...> {
 	T value;
 
+	template <typename...>
+		friend struct tuple;
 	template <size_t, typename, typename...>
 		friend struct getter;
 	template <size_t, typename, typename...>
 		friend struct getter_runtime;
 	template <typename, typename, typename...>
-		friend struct tuple_applier;
-	template <size_t, typename, typename, typename>
-		friend struct tuple_mapper;
+		friend struct tuple_foreach_impl;
 
 	public:
 		tuple() = default;
 
 		explicit tuple(T value, Ts... values):
-			tuple<Ts...>(std::forward<Ts>(values)...),
-			value(std::forward<T>(value)) {
+			tuple<Ts...>(values...),
+			value(value) {
 			}
 
-		tuple(const tuple& o):
-			tuple<Ts...>(o),
-			value(o.value)
-			{}
+		template <typename F, typename U, typename... Us>
+			explicit tuple(tuple_map_tag_t tag, F f, const tuple<U, Us...>& t):
+				tuple<Ts...>(tag, f, static_cast<tuple<Us...>>(t)),
+				value(f(t.value)) {
+				}
+
+		~tuple() = default;
+		tuple(const tuple&) = default;
+		tuple(tuple&&) = default;
+		tuple& operator=(const tuple&) = default;
+		tuple& operator=(tuple&&) = default;
 
 		tuple_range<T, Ts...> all() const {
 			return tuple_range<T, Ts...>(*this);
@@ -66,19 +82,19 @@ struct tuple_elem<0, T, Ts...> {
 };
 
 template <typename F, typename T, typename... Ts>
-struct tuple_applier {
+struct tuple_foreach_impl {
 	static void apply(tuple<T, Ts...>& t, F f) {
 		f(t.value);
-		tuple_applier<F, Ts...>::apply(t, f);
+		tuple_foreach_impl<F, Ts...>::apply(t, f);
 	}
 	static void apply(const tuple<T, Ts...>& t, F f) {
 		f(t.value);
-		tuple_applier<F, Ts...>::apply(t, f);
+		tuple_foreach_impl<F, Ts...>::apply(t, f);
 	}
 };
 
 template <typename F, typename T>
-struct tuple_applier<F, T> {
+struct tuple_foreach_impl<F, T> {
 	static void apply(tuple<T>& t, F f) {
 		f(t.value);
 	}
@@ -88,42 +104,13 @@ struct tuple_applier<F, T> {
 };
 
 template <typename... Ts, typename F>
-void tuple_apply(tuple<Ts...>& t, F f) {
-	tuple_applier<F, Ts...>::apply(t, f);
+void tuple_foreach(tuple<Ts...>& t, F f) {
+	tuple_foreach_impl<F, Ts...>::apply(t, f);
 }
 
 template <typename... Ts, typename F>
-void tuple_apply(const tuple<Ts...>& t, F f) {
-	tuple_applier<F, Ts...>::apply(t, f);
-}
-
-template <size_t I, typename F, typename T, typename R>
-struct tuple_mapper;
-
-template <size_t I, typename F,
-		 typename T, typename... Ts,
-		 typename R, typename... Rs>
-struct tuple_mapper<I, F, tuple<T, Ts...>, tuple<R, Rs...>> {
-	static void map(const tuple<T, Ts...>& t, tuple<R, Rs...>& r, F f) {
-		r.value = f(t.value);
-		tuple_mapper<I-1, F, tuple<Ts...>, tuple<Rs...>>::map(t, r, f);
-	}
-};
-
-template <typename F, typename T, typename R>
-struct tuple_mapper<0, F, tuple<T>, tuple<R>> {
-	static void map(const tuple<T>& t, tuple<R>& r, F f) {
-		r.value = f(t.value);
-	}
-};
-
-template <typename... Rs, typename F, typename... Ts>
-tuple<Rs...> tuple_map(const tuple<Ts...>& t, F f) {
-	static_assert(sizeof...(Rs) == sizeof...(Ts),
-			"tuple must be of same size");
-	tuple<Rs...> r;
-	tuple_mapper<sizeof...(Rs)-1, F, tuple<Ts...>, tuple<Rs...>>::map(t, r, f);
-	return r;
+void tuple_foreach(const tuple<Ts...>& t, F f) {
+	tuple_foreach_impl<F, Ts...>::apply(t, f);
 }
 
 template <size_t I, typename T, typename... Ts>
@@ -219,6 +206,13 @@ tuple<Ts...> make_tuple(Ts&&... values) {
 	return tuple<Ts...>(std::forward<Ts>(values)...);
 }
 
+template <typename F, typename... Ts>
+auto tuple_map(F f, const tuple<Ts...>& t) ->
+	tuple<typename std::result_of<F (Ts)>::type...> {
+		return tuple<typename std::result_of<F (Ts)>::type...>(
+				tuple_map_tag, f, t);
+}
+
 struct tuple_elem_printer {
 	bool first = true;
 	std::ostream& os;
@@ -239,7 +233,7 @@ std::ostream& operator<<(std::ostream& os, const tuple<Ts...>& t)
 	std::ostream::sentry init(os);
 	if (init) {
 		os << "tuple(";
-		tuple_apply(t, tuple_elem_printer(os));
+		tuple_foreach(t, tuple_elem_printer(os));
 		os << ")";
 	}
 	return os;

@@ -5,6 +5,9 @@
 #include "tools.hpp"
 #include "tuple.hpp"
 
+#include "../tricks/cxxabi.cpp"
+#define TN(x) typeName<decltype(x)>()
+
 template <typename T>
 struct ArrayRange {
 	ArrayRange(T* a, T* e): _b(a), _e(e) {}
@@ -97,52 +100,90 @@ struct Enumerator {
 template <typename R>
 Enumerator<R> enumerate(R r) { return r; }
 
-template <typename... Rs>
+//struct zipper_pop_front {
+//    template <typename T>
+//        void operator()(T& v) {
+//            v.pop_front();
+//        }
+//};
+
+template <typename... Ranges>
 struct Zipper {
-	typedef tuple<Rs...> ranges_t;
-	typedef tuple<typename range_info<Rs>::type...> type_t;
+	tuple<Ranges...> ranges;
 
-	ranges_t ranges;
-
-	Zipper(Rs... rs): ranges(rs...) {}
+	Zipper(Ranges... rs): ranges(rs...) {}
 
 
 	bool empty() const {
-		struct {
+		struct _ {
 			bool empty = false;
 			template <typename T>
 				void operator()(const T& v) {
-					if (v.empty())
+					if (v.empty()) {
 						empty = true;
+					}
 				}
-		} _;
-		tuple_apply(ranges, _);
-		return _.empty;
+		} empty_foreach;
+		tuple_foreach(ranges, zipper_empty(empty));
+		return empty_foreach.empty;
 	}
 
-//    type_t front() {
-//        struct {
-//            template <typename T>
-//                void operator()(T& v) {
-//                    v.pop_front();
-//                }
-//        } _;
-//        tuple_apply(ranges, _);
-//    }
-
-	void pop_front() {
+	auto front() -> tuple<typename range_info<Ranges>::type...> {
 		struct {
 			template <typename T>
-				void operator()(T& v) {
-					v.pop_front();
+				auto operator()(T range) -> decltype(range.front()) {
+					return range.front();
 				}
-		} _;
-		tuple_apply(ranges, _);
+		} front_map;
+		return tuple<typename range_info<Ranges>::type...>(
+				tuple_map_tag, front_map, this->ranges);
 	}
+
+//    void pop_front() {
+//        tuple_foreach(ranges, zipper_pop_front());
+//    }
 };
 
-template <typename... Rs>
-Zipper<Rs...> zip(Rs... rs) { return Zipper<Rs...>(rs...); }
+template <typename... Ranges>
+Zipper<Ranges...> zip(Ranges... rs) { return Zipper<Ranges...>(rs...); }
+
+// stride
+
+struct V {
+	int id;
+	V(int id): id(id) {
+		log() << " ctor" << std::endl;
+	}
+	~V() {
+		log() << " dtor" << std::endl;
+	}
+	V(const V& from): id(from.id) {
+		log() << " copy " << from << std::endl;
+	}
+	V(V&& from): id(from.id) {
+		from.id = -1;
+		log() << " move " << from << std::endl;
+	}
+	V& operator=(V from) {
+		id = from.id;
+		log() << " assigned " << from << std::endl;
+		return *this;
+	}
+	V& operator=(V&& from) {
+		std::swap(id, from.id);
+		log() << " move assigned " << from << std::endl;
+		return *this;
+	}
+
+	std::ostream& log() const {
+		return std::cout << "# " << *this;
+	}
+
+	friend std::ostream& operator<<(std::ostream& os, const V& v) {
+		os << "V(" << v.id << ")";
+		return os;
+	}
+};
 
 int main()
 {
@@ -165,48 +206,44 @@ int main()
 		b.pop_front();
 	}
 
-	std::cout << "---" << std::endl;
-	for (auto e: arange(a)) {
-		std::cout << e << std::endl;
-	}
-	std::cout << "---" << std::endl;
-	for (auto e: reverse(arange(a))) {
-		std::cout << e << std::endl;
-	}
-	std::cout << "---" << std::endl;
-	tuple<int, double, const char*> t(42, 21.1, "super tuple");
+//    std::cout << "---" << std::endl;
+//    for (auto e: arange(a)) {
+//        std::cout << e << std::endl;
+//    }
+//    std::cout << "---" << std::endl;
+//    for (auto e: reverse(arange(a))) {
+//        std::cout << e << std::endl;
+//    }
+//    std::cout << "---" << std::endl;
+//    tuple<int, double, const char*> t(42, 21.1, "super tuple");
 
-	for (auto e: t.all()) {
-		std::cout << e << std::endl;
-	}
-	std::cout << t << std::endl;
+//    for (auto e: t.all()) {
+//        std::cout << e << std::endl;
+//    }
+//    std::cout << t << std::endl;
 
-	std::cout << "n ---" << std::endl;
+//    std::cout << "n ---" << std::endl;
 
-	for (auto e: make_tuple(2, 'a', 22.3).all()) {
-		std::cout << e << std::endl;
-	}
+//    for (auto e: make_tuple(2, 'a', 22.3).all()) {
+//        std::cout << e << std::endl;
+//    }
 
+	V aa[] = { 1, 2, 3, 4, 5 };
 	std::cout << "e ---" << std::endl;
-	for (auto e: enumerate(arange(a))) {
+	for (auto e: enumerate(arange(aa))) {
+		std::cout << e << " /" << get<1>(e) << std::endl;
+		get<1>(e).id += 10;
+	}
+	std::cout << "e2 ---" << std::endl;
+	for (auto e: enumerate(arange(aa))) {
 		std::cout << e << " /" << get<1>(e) << std::endl;
 	}
 
 	std::cout << "z ---" << std::endl;
-//    for (auto e: zip(arange(a))) {
-//        std::cout << e << std::endl;
-//    }
-
-	struct mul {
-		template <typename T>
-			int operator()(const T& v) const {
-				return v;
-			}
-		int operator()(const char*) const {
-			return -1;
-		}
-	};
-	auto r = tuple_map<int, int, int>(t, mul());
-	std::cout << r << std::endl;
+	auto r = zip(arange(a), reverse(arange(a)));
+	for (auto e: zip(arange(a))) {
+		std::cout << e << std::endl;
+	}
+	std::cout << "= ---" << std::endl;
 	return 0;
 }
