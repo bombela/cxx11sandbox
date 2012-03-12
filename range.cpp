@@ -100,32 +100,20 @@ struct Enumerator {
 template <typename R>
 Enumerator<R> enumerate(R r) { return r; }
 
-//struct zipper_pop_front {
-//    template <typename T>
-//        void operator()(T& v) {
-//            v.pop_front();
-//        }
-//};
-
 template <typename... Ranges>
 struct Zipper {
 	tuple<Ranges...> ranges;
 
 	Zipper(Ranges... rs): ranges(rs...) {}
 
-
 	bool empty() const {
-		struct _ {
-			bool empty = false;
-			template <typename T>
-				void operator()(const T& v) {
-					if (v.empty()) {
-						empty = true;
-					}
+		struct {
+			template <typename T2>
+				bool operator()(bool a, const T2& range) {
+					return a or range.empty();
 				}
-		} empty_foreach;
-		tuple_foreach(ranges, zipper_empty(empty));
-		return empty_foreach.empty;
+		} empty_reduce;
+		return tuple_reduce(empty_reduce, this->ranges, false);
 	}
 
 	auto front() -> tuple<typename range_info<Ranges>::type...> {
@@ -139,9 +127,15 @@ struct Zipper {
 				tuple_map_tag, front_map, this->ranges);
 	}
 
-//    void pop_front() {
-//        tuple_foreach(ranges, zipper_pop_front());
-//    }
+	void pop_front() {
+		struct {
+			template <typename T>
+				void operator()(T& range) {
+					range.pop_front();
+				}
+		} pop_front_foreach;
+		tuple_foreach(this->ranges, pop_front_foreach);
+	}
 };
 
 template <typename... Ranges>
@@ -240,29 +234,20 @@ int main()
 	}
 
 	std::cout << "z ---" << std::endl;
-	auto t = ::make_tuple(1, 2.22, std::string("coucou"));
-	std::cout << t << " " << TN(t) << std::endl;
+	auto r = zip(arange(a), reverse(arange(a)));
+	std::cout << r.empty() << std::endl;
+	std::cout << r.front() << std::endl;
+	r.pop_front();
 
-	struct {
-		template <typename A, typename B>
-			int operator()(A a, B b) {
-				std::cout << a << " - " << b << std::endl;
-				return a + b;
-			}
-		template <typename A>
-			int operator()(A a, std::string b) {
-				std::cout << a << " - " << b << std::endl;
-				return a + 42;
-			}
-	} reducer;
+	for (auto e: r) {
+		std::cout << e << std::endl;
+	}
 
-	auto r = tuple_reduce(reducer, t);
-	std::cout << r << " " << TN(r) << std::endl;
+	std::cout << "z2 ---" << std::endl;
+	for (auto e: enumerate(zip(arange(a), reverse(arange(a))))) {
+		std::cout << e << std::endl;
+	}
 
-//    auto r = zip(arange(a), reverse(arange(a)));
-//    for (auto e: zip(arange(a))) {
-//        std::cout << e << std::endl;
-//    }
 	std::cout << "= ---" << std::endl;
 	return 0;
 }
