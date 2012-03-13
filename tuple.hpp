@@ -231,7 +231,8 @@ template <typename... Ts>
 struct tuple_range {
 		typedef tuple<Ts...> tuple_t;
 
-		tuple_range(const tuple_t& t): _t(t) {}
+		tuple_range(const tuple_t& t): _t(t),
+			_b(0), _e(sizeof...(Ts) -1) {}
 
 		bool empty() const { return _b > _e; }
 
@@ -264,8 +265,8 @@ struct tuple_range {
 	private:
 		const tuple_t& _t;
 
-		size_t _b = 0;
-		size_t _e = sizeof...(Ts) -1;
+		size_t _b;
+		size_t _e;
 
 		variant _front;
 		variant _back;

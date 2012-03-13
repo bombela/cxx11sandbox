@@ -5,7 +5,7 @@
 #include "tools.hpp"
 #include "tuple.hpp"
 
-#include "../tricks/cxxabi.cpp"
+#include "cxxabi.cpp"
 #define TN(x) typeName<decltype(x)>()
 
 template <typename T>
@@ -106,34 +106,40 @@ struct Zipper {
 
 	Zipper(Ranges... rs): ranges(rs...) {}
 
+	struct empty_reduce {
+		template <typename T2>
+			bool operator()(bool a, const T2& range) {
+				return a or range.empty();
+			}
+	};
+
 	bool empty() const {
-		struct {
-			template <typename T2>
-				bool operator()(bool a, const T2& range) {
-					return a or range.empty();
-				}
-		} empty_reduce;
-		return tuple_reduce(empty_reduce, this->ranges, false);
+		return tuple_reduce(empty_reduce(), this->ranges, false);
 	}
+
+	struct front_map {
+		template <typename T>
+			auto operator()(T range) -> decltype(range.front()) {
+				return range.front();
+			}
+	};
+
+	template <typename T>
+		auto front_map2(T range) -> decltype(range.front()) {
+			return range.front();
+		}
 
 	auto front() -> tuple<typename range_info<Ranges>::type...> {
-		struct {
-			template <typename T>
-				auto operator()(T range) -> decltype(range.front()) {
-					return range.front();
-				}
-		} front_map;
 		return tuple<typename range_info<Ranges>::type...>(
-				tuple_map_tag, front_map, this->ranges);
+				tuple_map_tag, front_map2, this->ranges);
 	}
 
+	template <typename T>
+		void pop_front_foreach(T& range) {
+			range.pop_front();
+		}
+
 	void pop_front() {
-		struct {
-			template <typename T>
-				void operator()(T& range) {
-					range.pop_front();
-				}
-		} pop_front_foreach;
 		tuple_foreach(this->ranges, pop_front_foreach);
 	}
 };
@@ -233,21 +239,21 @@ int main()
 		std::cout << e << " /" << get<1>(e) << std::endl;
 	}
 
-	std::cout << "z ---" << std::endl;
-	auto r = zip(arange(a), reverse(arange(a)));
-	std::cout << r.empty() << std::endl;
-	std::cout << r.front() << std::endl;
-	r.pop_front();
+//    std::cout << "z ---" << std::endl;
+//    auto r = zip(arange(a), reverse(arange(a)));
+//    std::cout << r.empty() << std::endl;
+//    std::cout << r.front() << std::endl;
+//    r.pop_front();
 
-	for (auto e: r) {
-		std::cout << e << std::endl;
-	}
+//    for (auto e: r) {
+//        std::cout << e << std::endl;
+//    }
 
-	int a2[] = { 11, 12, 13, 14, 15, 16, 17 };
-	std::cout << "z2 ---" << std::endl;
-	for (auto e: enumerate(zip(arange(a), arange(a2)))) {
-		std::cout << e << std::endl;
-	}
+//    int a2[] = { 11, 12, 13, 14, 15, 16, 17 };
+//    std::cout << "z2 ---" << std::endl;
+//    for (auto e: enumerate(zip(arange(a), arange(a2)))) {
+//        std::cout << e << std::endl;
+//    }
 
 	std::cout << "= ---" << std::endl;
 	return 0;
