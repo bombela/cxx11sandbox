@@ -141,7 +141,7 @@ struct tuple_reduce_impl {
 template <typename F, typename T>
 struct tuple_reduce_impl<F, T> {
 
-	static auto apply(F f, const tuple<T>& t) ->
+	static auto apply(F, const tuple<T>& t) ->
 		decltype(t.value) {
 			return t.value;
 		}
