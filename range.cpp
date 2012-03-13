@@ -200,6 +200,12 @@ struct V {
 	}
 };
 
+
+	struct {
+		template <typename T>
+			T operator()(T v) { return v * 2; }
+	} op;
+
 int main()
 {
 	std::cout << std::boolalpha << std::endl;
@@ -270,6 +276,14 @@ int main()
 		std::cout << e << std::endl;
 	}
 
+	std::cout << "# ---" << std::endl;
+	const int v = 3;
+	auto t2 = make_tuple(v, make_tuple(2, 2.2));
+	std::cout << t2 << " " << TN(t2) << std::endl;
+	std::cout << static_cast<tuple<tuple<int, double>>&>(t2) << std::endl;
+	std::cout << "/ ---" << std::endl;
+	auto t3 = tuple_map(op, make_tuple(2, 3.3));
+	std::cout << t3 << " " << TN(t3) << std::endl;
 	std::cout << "= ---" << std::endl;
 	return 0;
 }

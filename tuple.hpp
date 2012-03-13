@@ -38,6 +38,9 @@ struct tuple<> {
 			explicit tuple(tuple_map_tag_t, F, tuple<>) {}
 };
 
+// note that this is not a tuple as defined by the C++11 standard.
+// there is either more funny feature, and either less safe ones.
+// the C++11 make_tuple doesn't bind reference by default for example.
 template <typename T, typename... Ts>
 struct tuple<T, Ts...>: tuple<Ts...> {
 
@@ -49,15 +52,35 @@ struct tuple<T, Ts...>: tuple<Ts...> {
 
 		tuple() = default;
 
-		explicit tuple(T _p_value, Ts... values):
-			tuple<Ts...>(values...),
-			_p_value(_p_value) {
-			}
+		// some magic with rvalues my friend.
+		template <typename U, typename... Us,
+				 // this little enable_if is the tricks
+				 // to avoid interference with second constructor.
+				 typename = typename std::enable_if<
+					 sizeof... (Ts) == sizeof... (Us)
+					 >::type>
+			explicit tuple(U&& value, Us&&... values):
+				tuple<Ts...>(std::forward<Us>(values)...),
+				_p_value(std::forward<U>(value)) {
+				}
 
+		// this constructor copy a tuple by passing element trough some functor.
 		template <typename F, typename U, typename... Us>
-			explicit tuple(tuple_map_tag_t tag, F f, const tuple<U, Us...>& t):
-				tuple<Ts...>(tag, f, static_cast<tuple<Us...>>(t)),
+			explicit tuple(tuple_map_tag_t, F f, const tuple<U, Us...>& t):
+				tuple<Ts...>(tuple_map_tag, f,
+						static_cast<const tuple<Us...>&>(t)
+						),
 				_p_value(f(t._p_value)) {
+				}
+
+		// a little optimization for an rvalue tuple :)
+		// if the functor support perfect forwarding, you win.
+		template <typename F, typename U, typename... Us>
+			explicit tuple(tuple_map_tag_t, F f, tuple<U, Us...>&& t):
+				tuple<Ts...>(tuple_map_tag, f,
+						static_cast<tuple<Us...>&&>(t)
+						),
+				_p_value(f(std::move(t._p_value))) {
 				}
 
 		~tuple() = default;
@@ -272,6 +295,13 @@ auto tuple_map(F f, const tuple<Ts...>& t) ->
 	tuple<typename std::result_of<F (Ts)>::type...> {
 		return tuple<typename std::result_of<F (Ts)>::type...>(
 				tuple_map_tag, f, t);
+}
+
+template <typename F, typename... Ts>
+auto tuple_map(F f, tuple<Ts...>&& t) ->
+	tuple<typename std::result_of<F (Ts)>::type...> {
+		return tuple<typename std::result_of<F (Ts)>::type...>(
+				tuple_map_tag, f, std::move(t));
 }
 
 struct tuple_elem_printer {
