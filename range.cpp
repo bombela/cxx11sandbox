@@ -8,6 +8,7 @@
 #include "cxxabi.cpp"
 #define TN(x) typeName<decltype(x)>()
 
+// make a range referencing a little C style array.
 template <typename T>
 struct ArrayRange {
 	ArrayRange(T* a, T* e): _b(a), _e(e) {}
@@ -35,6 +36,8 @@ ArrayRange<typename array_info<T>::type> arange(T& a) {
 	return ArrayRange<typename array_info<T>::type>(a, array_info<T>::value);
 };
 
+// constify a range (since its reference by default, you might
+// want to force the constness if you are a serious programmer ;)
 template <typename R>
 struct Constifier {
 	Constifier(R r): _r(r) {}
@@ -58,6 +61,7 @@ struct Constifier {
 template <typename R>
 Constifier<R> constify(R r) { return r; }
 
+// seriously, do I need to explain what it does?
 template <typename R>
 struct Reverser {
 	Reverser(R r): _r(r) {}
@@ -81,6 +85,8 @@ struct Reverser {
 template <typename R>
 Reverser<R> reverse(R r) { return r; }
 
+// produce a range of tuple(idx, value)
+// inside a for(:) loop, it might be kind of cool.
 template <typename R>
 struct Enumerator {
 	typedef tuple<size_t, typename range_info<R>::type> tuple_t;
@@ -100,6 +106,9 @@ struct Enumerator {
 template <typename R>
 Enumerator<R> enumerate(R r) { return r; }
 
+// the best part, zip 1 to N ranges!
+// extract an item from every ranges and return them as a tuple. Every
+// operations are settled down at compile time <3
 template <typename... Ranges>
 struct Zipper {
 	tuple<Ranges...> ranges;
@@ -149,6 +158,7 @@ Zipper<Ranges...> zip(Ranges... rs) { return Zipper<Ranges...>(rs...); }
 // stride
 // one day, implement stride algo.
 
+// a little verbose class, just to check move semantic application.
 struct V {
 	int id;
 	V(int id): id(id) {
