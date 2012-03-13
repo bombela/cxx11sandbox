@@ -1,3 +1,8 @@
+/*
+ * range.cpp
+ * Copyright © 2012 François-Xavier 'Bombela' Bourlet <bombela@gmail.com>
+ *
+*/
 
 #include <iostream>
 #include <list>
