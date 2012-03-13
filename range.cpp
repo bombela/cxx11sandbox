@@ -147,6 +147,7 @@ template <typename... Ranges>
 Zipper<Ranges...> zip(Ranges... rs) { return Zipper<Ranges...>(rs...); }
 
 // stride
+// one day, implement stride algo.
 
 struct V {
 	int id;

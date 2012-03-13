@@ -27,9 +27,13 @@ struct tuple<> {
 		// be able to create an empty tuple by mistake.
 
 		template <typename...>
-			friend class tuple;
+			friend struct tuple;
 
 		explicit tuple() {}
+
+		// yes there is a definition of an empty tuple,
+		// but that avoid having a special tuple definition
+		// for one item :D
 		template <typename F>
 			explicit tuple(tuple_map_tag_t, F, tuple<>) {}
 };

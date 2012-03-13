@@ -32,6 +32,11 @@ struct constit<T*> {
 	typedef const T* type;
 };
 
+
+// yes I, macro is ugly and bad.
+// but, good luck doing magic detection of
+// function members without something similar!
+
 #define DEF_IS_EXPR(__name, __expr, __and) \
 struct __name { \
 	typedef char yes; \
@@ -75,6 +80,8 @@ struct range_info {
 	typedef decltype(((R*)0)->front()) type;
 };
 
+// its not a real iterator, just something that
+// make possible the for(:) statement on ranges.
 template <typename R>
 struct range_iterator {
 	R& r;

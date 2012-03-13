@@ -16,6 +16,10 @@
 
 #include "tools.hpp"
 
+// just for fun, a little variant type.
+// behave somewhat like a script language variable,
+// simply allocate a copy of the hidden variable on the heap.
+
 class variant {
 	public:
 		~variant() = default;
