@@ -42,7 +42,6 @@ struct tuple<T, Ts...>: tuple<Ts...> {
 		// make everything simply far easier. Who care about diving into some
 		// private implementation details shit anyway?
 		// who care if somebody can cast the poor tuple and break everything!
-		// who care if somebody can instantiate an empty tuple after all.
 
 		tuple() = default;
 
