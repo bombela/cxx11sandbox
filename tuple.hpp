@@ -14,59 +14,47 @@
 struct tuple_map_tag_t {} tuple_map_tag;
 
 template <typename... Ts>
-class tuple;
-
-template <>
-class tuple<> {
-	template <typename...>
-		friend class tuple;
-
-	explicit tuple() {}
-	template <typename F>
-		explicit tuple(tuple_map_tag_t, F, tuple<>) {}
-};
-
-template <typename... Ts>
 struct tuple_range;
 
-template <typename F, typename T, typename... Ts>
-struct tuple_foreach_impl;
+template <typename... Ts>
+struct tuple;
 
-template <typename F, typename T, typename... Ts>
-struct tuple_reduce_impl;
+template <>
+struct tuple<> {
+	private:
+		// special case, make everything private because
+		// its the end of recursion, and nobody should
+		// be able to create an empty tuple by mistake.
 
-template <typename F, typename T, typename... Ts>
-struct tuple_reduce_impl2;
+		template <typename...>
+			friend class tuple;
+
+		explicit tuple() {}
+		template <typename F>
+			explicit tuple(tuple_map_tag_t, F, tuple<>) {}
+};
 
 template <typename T, typename... Ts>
-class tuple<T, Ts...>: private tuple<Ts...> {
-	T value;
+struct tuple<T, Ts...>: tuple<Ts...> {
 
-	template <typename...>
-		friend struct tuple;
-	template <size_t, typename, typename...>
-		friend struct getter;
-	template <size_t, typename, typename...>
-		friend struct getter_runtime;
-	template <typename, typename, typename...>
-		friend struct tuple_foreach_impl;
-	template <typename, typename, typename...>
-		friend struct tuple_reduce_impl;
-	template <typename, typename, typename...>
-		friend struct tuple_reduce_impl2;
+		T _p_value; // everything is public (first for gcc whining), and
+		// anyway, making this attribute public as well as inheriting in public
+		// make everything simply far easier. Who care about diving into some
+		// private implementation details shit anyway?
+		// who care if somebody can cast the poor tuple and break everything!
+		// who care if somebody can instantiate an empty tuple after all.
 
-	public:
 		tuple() = default;
 
-		explicit tuple(T value, Ts... values):
+		explicit tuple(T _p_value, Ts... values):
 			tuple<Ts...>(values...),
-			value(value) {
+			_p_value(_p_value) {
 			}
 
 		template <typename F, typename U, typename... Us>
 			explicit tuple(tuple_map_tag_t tag, F f, const tuple<U, Us...>& t):
 				tuple<Ts...>(tag, f, static_cast<tuple<Us...>>(t)),
-				value(f(t.value)) {
+				_p_value(f(t._p_value)) {
 				}
 
 		~tuple() = default;
@@ -94,11 +82,11 @@ struct tuple_elem<0, T, Ts...> {
 template <typename F, typename T, typename... Ts>
 struct tuple_foreach_impl {
 	static void apply(tuple<T, Ts...>& t, F f) {
-		f(t.value);
+		f(t._p_value);
 		tuple_foreach_impl<F, Ts...>::apply(t, f);
 	}
 	static void apply(const tuple<T, Ts...>& t, F f) {
-		f(t.value);
+		f(t._p_value);
 		tuple_foreach_impl<F, Ts...>::apply(t, f);
 	}
 };
@@ -106,10 +94,10 @@ struct tuple_foreach_impl {
 template <typename F, typename T>
 struct tuple_foreach_impl<F, T> {
 	static void apply(tuple<T>& t, F f) {
-		f(t.value);
+		f(t._p_value);
 	}
 	static void apply(const tuple<T>& t, F f) {
-		f(t.value);
+		f(t._p_value);
 	}
 };
 
@@ -127,14 +115,14 @@ template <typename F, typename T, typename... Ts>
 struct tuple_reduce_impl {
 
 	static auto apply(F f, const tuple<T, Ts...>& t) ->
-		decltype(tuple_reduce_impl<F, Ts...>::apply(f, t, t.value)) {
-			return tuple_reduce_impl<F, Ts...>::apply(f, t, t.value);
+		decltype(tuple_reduce_impl<F, Ts...>::apply(f, t, t._p_value)) {
+			return tuple_reduce_impl<F, Ts...>::apply(f, t, t._p_value);
 		}
 
 	template <typename V>
 		static auto apply(F f, const tuple<T, Ts...>& t, V v) ->
-			decltype(tuple_reduce_impl<F, Ts...>::apply(f, t, f(v, t.value))) {
-			return tuple_reduce_impl<F, Ts...>::apply(f, t, f(v, t.value));
+			decltype(tuple_reduce_impl<F, Ts...>::apply(f, t, f(v, t._p_value))) {
+			return tuple_reduce_impl<F, Ts...>::apply(f, t, f(v, t._p_value));
 		}
 };
 
@@ -142,14 +130,14 @@ template <typename F, typename T>
 struct tuple_reduce_impl<F, T> {
 
 	static auto apply(F, const tuple<T>& t) ->
-		decltype(t.value) {
-			return t.value;
+		decltype(t._p_value) {
+			return t._p_value;
 		}
 
 	template <typename V>
 		static auto apply(F f, const tuple<T>& t, V v) ->
-			decltype(f(v, t.value)) {
-			return f(v, t.value);
+			decltype(f(v, t._p_value)) {
+			return f(v, t._p_value);
 		}
 };
 
@@ -163,8 +151,8 @@ template <typename F, typename T, typename... Ts>
 struct tuple_reduce_impl2 {
 	template <typename V>
 		static auto apply(F f, const tuple<T, Ts...>& t, V v) ->
-			decltype(tuple_reduce_impl2<F, Ts...>::apply(f, t, f(v, t.value))) {
-			return tuple_reduce_impl2<F, Ts...>::apply(f, t, f(v, t.value));
+			decltype(tuple_reduce_impl2<F, Ts...>::apply(f, t, f(v, t._p_value))) {
+			return tuple_reduce_impl2<F, Ts...>::apply(f, t, f(v, t._p_value));
 		}
 };
 
@@ -172,8 +160,8 @@ template <typename F, typename T>
 struct tuple_reduce_impl2<F, T> {
 	template <typename V>
 		static auto apply(F f, const tuple<T>& t, V v) ->
-			decltype(f(v, t.value)) {
-			return f(v, t.value);
+			decltype(f(v, t._p_value)) {
+			return f(v, t._p_value);
 		}
 };
 
@@ -193,7 +181,7 @@ struct getter {
 template <typename T, typename... Ts>
 struct getter<0, T, Ts...> {
 	static T get(tuple<T, Ts...>& t) {
-		return t.value;
+		return t._p_value;
 	}
 };
 
@@ -206,7 +194,7 @@ template <size_t I, typename T, typename... Ts>
 struct getter_runtime {
 	static variant get(size_t idx, const tuple<T, Ts...>& t) {
 		if (idx == 0) {
-			return variant(t.value);
+			return variant(t._p_value);
 		}
 		return getter_runtime<I-1, Ts...>::get(idx-1, t);
 	}
@@ -216,7 +204,7 @@ template <typename T, typename... Ts>
 struct getter_runtime<0, T, Ts...> {
 	static variant get(size_t idx, const tuple<T, Ts...>& t) {
 		if (idx == 0) {
-			return variant(t.value);
+			return variant(t._p_value);
 		}
 		throw std::out_of_range("tuple index out of bound");
 	}
@@ -231,8 +219,7 @@ template <typename... Ts>
 struct tuple_range {
 		typedef tuple<Ts...> tuple_t;
 
-		tuple_range(const tuple_t& t): _t(t),
-			_b(0), _e(sizeof...(Ts) -1) {}
+		tuple_range(const tuple_t& t): _t(t) {}
 
 		bool empty() const { return _b > _e; }
 
@@ -265,8 +252,8 @@ struct tuple_range {
 	private:
 		const tuple_t& _t;
 
-		size_t _b;
-		size_t _e;
+		size_t _b = 0;
+		size_t _e = (sizeof...(Ts) - 1);
 
 		variant _front;
 		variant _back;

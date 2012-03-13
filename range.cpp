@@ -106,6 +106,8 @@ struct Zipper {
 
 	Zipper(Ranges... rs): ranges(rs...) {}
 
+	// should be inline instantiated in empty(),
+	// but gcc complain.
 	struct empty_reduce {
 		template <typename T2>
 			bool operator()(bool a, const T2& range) {
@@ -124,23 +126,20 @@ struct Zipper {
 			}
 	};
 
-	template <typename T>
-		auto front_map2(T range) -> decltype(range.front()) {
-			return range.front();
-		}
-
 	auto front() -> tuple<typename range_info<Ranges>::type...> {
 		return tuple<typename range_info<Ranges>::type...>(
-				tuple_map_tag, front_map2, this->ranges);
+				tuple_map_tag, front_map(), this->ranges);
 	}
 
-	template <typename T>
-		void pop_front_foreach(T& range) {
-			range.pop_front();
-		}
+	struct pop_front_foreach {
+		template <typename T>
+			void operator()(T& range) {
+				range.pop_front();
+			}
+	};
 
 	void pop_front() {
-		tuple_foreach(this->ranges, pop_front_foreach);
+		tuple_foreach(this->ranges, pop_front_foreach());
 	}
 };
 
@@ -206,27 +205,27 @@ int main()
 		b.pop_front();
 	}
 
-//    std::cout << "---" << std::endl;
-//    for (auto e: arange(a)) {
-//        std::cout << e << std::endl;
-//    }
-//    std::cout << "---" << std::endl;
-//    for (auto e: reverse(arange(a))) {
-//        std::cout << e << std::endl;
-//    }
-//    std::cout << "---" << std::endl;
-//    tuple<int, double, const char*> t(42, 21.1, "super tuple");
+	std::cout << "---" << std::endl;
+	for (auto e: arange(a)) {
+		std::cout << e << std::endl;
+	}
+	std::cout << "---" << std::endl;
+	for (auto e: reverse(arange(a))) {
+		std::cout << e << std::endl;
+	}
+	std::cout << "---" << std::endl;
+	tuple<int, double, const char*> t(42, 21.1, "super tuple");
 
-//    for (auto e: t.all()) {
-//        std::cout << e << std::endl;
-//    }
-//    std::cout << t << std::endl;
+	for (auto e: t.all()) {
+		std::cout << e << std::endl;
+	}
+	std::cout << t << std::endl;
 
-//    std::cout << "n ---" << std::endl;
+	std::cout << "n ---" << std::endl;
 
-//    for (auto e: make_tuple(2, 'a', 22.3).all()) {
-//        std::cout << e << std::endl;
-//    }
+	for (auto e: make_tuple(2, 'a', 22.3).all()) {
+		std::cout << e << std::endl;
+	}
 
 	V aa[] = { 1, 2, 3, 4 };
 	std::cout << "e ---" << std::endl;
@@ -239,21 +238,21 @@ int main()
 		std::cout << e << " /" << get<1>(e) << std::endl;
 	}
 
-//    std::cout << "z ---" << std::endl;
-//    auto r = zip(arange(a), reverse(arange(a)));
-//    std::cout << r.empty() << std::endl;
-//    std::cout << r.front() << std::endl;
-//    r.pop_front();
+	std::cout << "z ---" << std::endl;
+	auto r = zip(arange(a), reverse(arange(a)));
+	std::cout << r.empty() << std::endl;
+	std::cout << r.front() << std::endl;
+	r.pop_front();
 
-//    for (auto e: r) {
-//        std::cout << e << std::endl;
-//    }
+	for (auto e: r) {
+		std::cout << e << std::endl;
+	}
 
-//    int a2[] = { 11, 12, 13, 14, 15, 16, 17 };
-//    std::cout << "z2 ---" << std::endl;
-//    for (auto e: enumerate(zip(arange(a), arange(a2)))) {
-//        std::cout << e << std::endl;
-//    }
+	int a2[] = { 11, 12, 13, 14, 15, 16, 17 };
+	std::cout << "z2 ---" << std::endl;
+	for (auto e: enumerate(zip(arange(a), arange(a2)))) {
+		std::cout << e << std::endl;
+	}
 
 	std::cout << "= ---" << std::endl;
 	return 0;
