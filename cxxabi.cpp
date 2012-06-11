@@ -4,6 +4,10 @@
  *
 */
 
+#pragma once
+#ifndef CXXABI_H
+#define CXXABI_H
+
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -48,6 +52,8 @@ std::string typeName()
 	::free(demangledName);
 	return r;
 }
+
+#endif /* CXXABI_H */
 
 #if __INCLUDE_LEVEL__ == 0
 
