@@ -33,9 +33,8 @@ struct constit<T*> {
 };
 
 
-// yes I, macro is ugly and bad.
-// but, good luck doing magic detection of
-// function members without something similar!
+// yes I know, macro is ugly and bad.
+// but, good luck doing the same black magic without it.
 
 #define DEF_IS_EXPR(__name, __expr, __and) \
 struct __name { \

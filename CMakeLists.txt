@@ -15,3 +15,7 @@ endif()
 add_executable(test_range
 	range.cpp
 	)
+
+add_executable(test_algo
+	algo.cpp
+	)
