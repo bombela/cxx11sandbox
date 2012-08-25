@@ -43,7 +43,7 @@ int main()
 
 	auto r = range(1, 10);
 
-	std::cout << TN(r) << " " << r.length() << std::endl;
+	std::cout << TN(r) << " " << r.size() << std::endl;
 	for (auto x: r) {
 		std::cout << TN(x) << " " << x << std::endl;
 	}

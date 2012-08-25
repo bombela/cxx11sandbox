@@ -19,6 +19,47 @@ struct tuple_range;
 template <typename... Ts>
 struct tuple;
 
+template <size_t I, typename T, typename... Ts>
+struct tuple_elem {
+	static_assert(I-1 < sizeof...(Ts), "index out of bound in tuple!");
+	typedef typename tuple_elem<I-1, Ts...>::type type;
+};
+
+template <typename T, typename... Ts>
+struct tuple_elem<0, T, Ts...> {
+	typedef T type;
+};
+
+template <size_t I, typename T, typename... Ts>
+struct getter {
+	static typename tuple_elem<I-1, Ts...>::type get(tuple<T, Ts...>& t) {
+		return getter<I-1, Ts...>::get(t);
+	}
+	static typename tuple_elem<I-1, Ts...>::type get(const tuple<T, Ts...>& t) {
+		return getter<I-1, Ts...>::get(t);
+	}
+};
+
+template <typename T, typename... Ts>
+struct getter<0, T, Ts...> {
+	static T get(tuple<T, Ts...>& t) {
+		return t._p_value;
+	}
+	static T get(const tuple<T, Ts...>& t) {
+		return t._p_value;
+	}
+};
+
+template <size_t I, typename... Ts>
+typename tuple_elem<I, Ts...>::type get(tuple<Ts...>& t) {
+	return getter<I, Ts...>::get(t);
+}
+
+template <size_t I, typename... Ts>
+typename tuple_elem<I, Ts...>::type get(const tuple<Ts...>& t) {
+	return getter<I, Ts...>::get(t);
+}
+
 template <>
 struct tuple<> {
 	private:
@@ -36,6 +77,10 @@ struct tuple<> {
 		// for one item :D
 		template <typename F>
 			explicit tuple(tuple_map_tag_t, F, tuple<>) {}
+
+		auto first() const -> void {}
+		auto second() const -> void {}
+		auto third() const -> void {}
 };
 
 // note that this is not a tuple as defined by the C++11 standard.
@@ -48,7 +93,7 @@ struct tuple<T, Ts...>: tuple<Ts...> {
 		// anyway, making this attribute public as well as inheriting in public
 		// make everything simply far easier. Who care about diving into some
 		// private implementation details shit anyway?
-		// who care if somebody can cast the poor tuple and break everything!
+		// who cares if somebody can cast the poor tuple and break everything!
 
 		tuple() = default;
 
@@ -92,17 +137,18 @@ struct tuple<T, Ts...>: tuple<Ts...> {
 		tuple_range<T, Ts...> all() const {
 			return tuple_range<T, Ts...>(*this);
 		}
-};
 
-template <size_t I, typename T, typename... Ts>
-struct tuple_elem {
-	static_assert(I-1 < sizeof...(Ts), "index out of bound in tuple!");
-	typedef typename tuple_elem<I-1, Ts...>::type type;
-};
-
-template <typename T, typename... Ts>
-struct tuple_elem<0, T, Ts...> {
-	typedef T type;
+		auto first() -> decltype(get<0>(*this)) {
+			return get<0>(*this);
+		}
+		auto second() -> decltype(
+				(*this).tuple<Ts...>::first()) {
+			return tuple<Ts...>::first();
+		}
+		auto third() -> decltype(
+				(*this).tuple<Ts...>::second()) {
+			return tuple<Ts...>::second();
+		}
 };
 
 template <typename F, typename T, typename... Ts>
@@ -195,25 +241,6 @@ template <typename F, typename T, typename... Ts>
 auto tuple_reduce(F f, const tuple<Ts...>& t, T init) ->
 	decltype(tuple_reduce_impl2<F, Ts...>::apply(f, t, init)) {
 	return tuple_reduce_impl2<F, Ts...>::apply(f, t, init);
-}
-
-template <size_t I, typename T, typename... Ts>
-struct getter {
-	static typename tuple_elem<I-1, Ts...>::type get(tuple<T, Ts...>& t) {
-		return getter<I-1, Ts...>::get(t);
-	}
-};
-
-template <typename T, typename... Ts>
-struct getter<0, T, Ts...> {
-	static T get(tuple<T, Ts...>& t) {
-		return t._p_value;
-	}
-};
-
-template <size_t I, typename... Ts>
-typename tuple_elem<I, Ts...>::type get(tuple<Ts...>& t) {
-	return getter<I, Ts...>::get(t);
 }
 
 template <size_t I, typename T, typename... Ts>

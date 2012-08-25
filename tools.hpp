@@ -13,7 +13,7 @@ struct array_info;
 
 template <typename A, size_t S>
 struct array_info<A[S]> {
-	static const size_t value = S;
+	static const size_t size = S;
 	typedef A type;
 };
 
@@ -66,12 +66,12 @@ DEF_IS_EXPR(is_bidirectional_range, (
 
 template <typename T>
 DEF_IS_EXPR(is_random_range, (
-		sizeof (*(U*)0).at(42)
+		sizeof (*(U*)0)[42]
 		), is_forward_range<T>::value)
 
 template <typename T>
 DEF_IS_EXPR(is_finite_range, (
-		sizeof size_t((*(U*)0).length())
+		sizeof size_t((*(U*)0).size())
 		), is_forward_range<T>::value)
 
 template <typename R>

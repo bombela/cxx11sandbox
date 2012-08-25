@@ -39,9 +39,11 @@ struct NumberRange {
 		return 0;
 	}
 
-	size_t length() const {
+	size_t size() const {
 		return (_e - _b) / _s;
 	};
+
+	T& operator[](size_t idx) { return (_s + idx) % _e; }
 
 	T _b, _e;
 	T const _s;
@@ -65,18 +67,15 @@ struct ArrayRange {
 	ArrayRange(T* a, T* e): _b(a), _e(e) {}
 	ArrayRange(T* a, size_t s): _b(a), _e(a + s - 1) {}
 
-	template <typename U>
-		ArrayRange(ArrayRange<U> o): _b(o._b), _e(o._e) {}
-
 	bool empty() const { return _b > _e; }
 	void pop_front() { ++_b; }
 	T& front() const { return *_b; }
 	void pop_back() { --_e; }
 	T& back() const { return *_e; }
 
-	T& at(size_t idx) { return _b[idx]; }
+	T& operator[](size_t idx) { return _b[idx]; }
 
-	size_t length() const { return _e - _b; };
+	size_t size() const { return _e - _b; };
 
 	T* _b;
 	T* _e;
@@ -84,29 +83,23 @@ struct ArrayRange {
 
 template <typename T>
 ArrayRange<typename array_info<T>::type> arange(T& a) {
-	return ArrayRange<typename array_info<T>::type>(a, array_info<T>::value);
+	return ArrayRange<typename array_info<T>::type>(a, array_info<T>::size);
 };
 
-// constify a range (since its reference by default, you might
-// want to force the constness if you are a serious programmer ;)
+// constify a range (add a const qualifier to front & back)
 template <typename R>
-struct Constifier {
-	Constifier(R r): _r(r) {}
+struct Constifier: public R {
+	Constifier(R r): R(r) {}
 
-	template <typename U>
-		Constifier(Constifier<U> o): _r(o._r) {}
-
-	bool empty() const { return _r.empty(); }
-	void pop_front() { _r.pop_front(); }
 	typename constit<typename range_info<R>::type>::type front() {
-		return _r.front();
+		return R::front();
 	}
-	void pop_back() { _r.pop_back(); }
 	typename constit<typename range_info<R>::type>::type back() {
-		return _r.back();
+		return R::back();
 	}
-
-	R _r;
+	typename constit<typename range_info<R>::type>::type operator[](size_t idx) {
+		return R::operator[](idx);
+	}
 };
 
 template <typename R>
@@ -114,43 +107,46 @@ Constifier<R> constify(R r) { return r; }
 
 // seriously, do I need to explain what it does?
 template <typename R>
-struct Reverser {
-	Reverser(R r): _r(r) {}
+struct Reverser: public R {
+	Reverser(R r): R(r) {}
 
-	template <typename U>
-		Reverser(Reverser<U> o): _r(o._r) {}
-
-	bool empty() const { return _r.empty(); }
-	void pop_front() { _r.pop_back(); }
+	void pop_front() { R::pop_back(); }
 	auto front() -> typename range_info<R>::type {
-		return _r.back();
+		return R::back();
 	}
-	void pop_back() { _r.pop_front(); }
+	void pop_back() { R::pop_front(); }
 	auto back() -> typename range_info<R>::type {
-		return _r.front();
+		return R::front();
 	}
-
-	R _r;
+	auto operator[](size_t idx) -> typename range_info<R>::type {
+		return R::operator[](R::size() - 1 - idx);
+	}
 };
 
 template <typename R>
 Reverser<R> reverse(R r) { return r; }
 
 // produce a range of tuple(idx, value)
-// inside a for(:) loop, it might be kind of cool.
+// inside a for(:) loop, it might be kind of useful.
 template <typename R>
-struct Enumerator {
+struct Enumerator: public R {
 	typedef tuple<size_t, typename range_info<R>::type> tuple_t;
 
-	Enumerator(R r): _r(r), _idx(0) {}
+	Enumerator(R r): R(r), _idx(0) {}
 
-	bool empty() const { return _r.empty(); }
-	void pop_front() { _r.pop_front(); ++_idx; }
+	void pop_front() { R::pop_front(); ++_idx; }
 	tuple_t front() {
-		return tuple_t(_idx, _r.front());
+		return tuple_t(_idx, R::front());
+	}
+	void pop_back() { R::pop_back(); }
+	tuple_t back() {
+		return tuple_t(R::size() - _idx, R::front());
 	}
 
-	R _r;
+	tuple_t operator[](size_t idx) {
+		return R::operator[](R::size() - 1 - idx);
+	}
+
 	size_t _idx;
 };
 
@@ -230,5 +226,7 @@ struct Mapper {
 
 template <typename F, typename R>
 Mapper<F, R> map(F f, R r) { return {f, r}; }
+
+//struct <typename R>
 
 #endif /* RANGE_H */

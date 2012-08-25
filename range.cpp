@@ -139,5 +139,30 @@ int main()
 	auto t3 = tuple_map(op, make_tuple(2, 3.3));
 	std::cout << t3 << " " << TN(t3) << std::endl;
 	std::cout << "= ---" << std::endl;
+
+	std::cout << "# constify" << std::endl;
+	struct {
+		void operator()(const int&) {}
+		void operator()(int& v) { v += 42; }
+	} update;
+	for (auto& e: arange(a2)) {
+		std::cout << e << ", ";
+		update(e);
+	}
+	std::cout << std::endl;
+	for (auto& e: constify(arange(a2))) {
+		std::cout << e << ", ";
+		update(e);
+	}
+	std::cout << std::endl;
+	for (auto& e: arange(a2)) {
+		std::cout << e << ", ";
+	}
+	std::cout << std::endl;
+
+	std::cout << "back enumerate ---" << std::endl;
+	for (auto e: reverse(enumerate(arange(a2)))) {
+		std::cout << e.first() << ", " << e.second() << std::endl;
+	}
 	return 0;
 }
