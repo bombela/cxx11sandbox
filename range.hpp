@@ -16,7 +16,8 @@
 // a simple number range
 template <typename T>
 struct NumberRange {
-	constexpr NumberRange(T begin, T end, T step): _b(begin), _e(end), _s(step) {}
+	constexpr NumberRange(T begin, T end, T step): _b(begin), _e(end),
+		_s(begin <= end or step < 0 ? step : -step) {}
 	constexpr NumberRange(NumberRange&& r) = default;
 	NumberRange(const NumberRange&) = default;
 
@@ -35,15 +36,19 @@ struct NumberRange {
 	void pop_back() { _e += _s; }
 	T back() const { return _e; }
 
-	T at(size_t idx) {
-		return 0;
-	}
-
 	size_t size() const {
-		return (_e - _b) / _s;
+		const T fract_size = (_e - _b) / _s;
+		return (fract_size - size_t(fract_size)) > 0 ?
+			 fract_size + 1 : fract_size;
 	};
 
-	T& operator[](size_t idx) { return (_s + idx) % _e; }
+	T operator[](size_t idx) {
+		const T v = _b + idx * _s;
+		if ((_s > 0) ? (v >= _e) : (v <= _e)) {
+			throw std::overflow_error("out of bound");
+		}
+		return v;
+	}
 
 	T _b, _e;
 	T const _s;

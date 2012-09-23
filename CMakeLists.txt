@@ -19,3 +19,7 @@ add_executable(test_range
 add_executable(test_algo
 	algo.cpp
 	)
+
+add_executable(test_nbrange
+	nbrange.cpp
+	)
