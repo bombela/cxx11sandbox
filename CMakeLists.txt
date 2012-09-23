@@ -23,3 +23,7 @@ add_executable(test_algo
 add_executable(test_nbrange
 	nbrange.cpp
 	)
+
+add_executable(test_property
+	property.cpp
+	)
