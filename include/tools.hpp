@@ -41,38 +41,51 @@ struct __name { \
 	typedef char yes; \
 	struct no { char _[2]; }; \
 \
-	template <size_t> struct swallow {}; \
+	template <typename> struct swallow {}; \
 \
 	template <typename U> \
-	static yes check(U*, swallow<(( sizeof __expr ))>* = 0); \
+	static yes check(U*, swallow<decltype(__expr)>* = 0); \
 	static no check(...); \
 \
 	static const bool value = \
 		((sizeof check((T*)0) == sizeof (yes)) and (__and)); \
 };
 
+
 template <typename T>
-DEF_IS_EXPR(is_forward_range, (
-		sizeof bool((*(U*)0).empty()),
+DEF_IS_EXPR(__is_forward_range_step1,
+		bool((*(U*)0).empty()),
+		true)
+
+template <typename T>
+DEF_IS_EXPR(__is_forward_range_step2,
 		sizeof (*(U*)0).front(),
-		sizeof (*(U*)0).pop_front()
-		), true)
+		__is_forward_range_step1<T>::value)
 
 template <typename T>
-DEF_IS_EXPR(is_bidirectional_range, (
+DEF_IS_EXPR(is_forward_range,
+		(*(U*)0).pop_front(),
+		__is_forward_range_step2<T>::value)
+
+template <typename T>
+DEF_IS_EXPR(__is_bidirectional_range_step1,
 		sizeof (*(U*)0).back(),
-		sizeof (*(U*)0).pop_back()
-		), is_forward_range<T>::value)
+		is_forward_range<T>::value)
 
 template <typename T>
-DEF_IS_EXPR(is_random_range, (
-		sizeof (*(U*)0)[42]
-		), is_forward_range<T>::value)
+DEF_IS_EXPR(is_bidirectional_range,
+		(*(U*)0).pop_back(),
+		__is_bidirectional_range_step1<T>::value)
 
 template <typename T>
-DEF_IS_EXPR(is_finite_range, (
-		sizeof size_t((*(U*)0).size())
-		), is_forward_range<T>::value)
+DEF_IS_EXPR(is_random_range,
+		sizeof (*(U*)0)[42],
+		is_forward_range<T>::value)
+
+template <typename T>
+DEF_IS_EXPR(is_finite_range,
+		size_t((*(U*)0).size()),
+		is_forward_range<T>::value)
 
 template <typename R>
 struct range_info {

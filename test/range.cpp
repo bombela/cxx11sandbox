@@ -7,9 +7,9 @@
 #include <iostream>
 #include <list>
 
-#include "tools.hpp"
-#include "tuple.hpp"
-#include "range.hpp"
+#include <tools.hpp>
+#include <tuple.hpp>
+#include <range.hpp>
 
 #include "cxxabi.cpp"
 #define TN(x) typeName<decltype(x)>()
@@ -60,12 +60,14 @@ struct V {
 			T operator()(T v) { return v * 2; }
 	} op;
 
+
 int main()
 {
 	std::cout << std::boolalpha << std::endl;
 
 	int a[] = { 1, 2, 3, 4, 5 };
 	auto b = arange(a);
+
 	static_assert(is_forward_range<decltype(b)>::value,
 			"is_forward_range");
 	static_assert(is_bidirectional_range<decltype(b)>::value,

@@ -1,19 +1,17 @@
 A little C++11 sandbox.
 
-Need to be a bit organized around tests.
+You will find in it mostly experimentation like:
+ - ranges
+ - properties
+ - coroutines
+ - generators
+ - async-io with coroutines...
 
-Everything *should* compile with:
+All of that, just for fun.
 
-    - clang++ >= clang version 3.1 (trunk 150359)
-    - g++ >= gcc-4.8-20120311
+Everything *may* compile with:
 
-Note: some intricate code are because of compiler bugs/limitation in C++11 support.
+    - clang++ >= version 3.2 (trunk 164880)
+    - g++ >= 4.8.0 20120923 (experimental)
 
-Note again:
-
-You do what the hell you want with all the code present in this repository.
-
-BUT DON'T COME BACK WHINING IF IT DOESN'T WORK.
-
-However, if you want to talk about C++ in a peaceful way feel free to contact
-me (bombela@gmail.com), I also always nicer around a beer ;)
+If you want to talk about C++ with a fresh beer in hand -> bombela@gmail.com
