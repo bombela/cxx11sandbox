@@ -232,6 +232,4 @@ struct Mapper {
 template <typename F, typename R>
 Mapper<F, R> map(F f, R r) { return {f, r}; }
 
-//struct <typename R>
-
 #endif /* RANGE_H */

@@ -27,3 +27,4 @@ endmacro()
 
 sandbox_add_test(range.cpp)
 sandbox_add_test(property.cpp CLANG_ONLY)
+sandbox_add_test(algo.cpp CLANG_ONLY)

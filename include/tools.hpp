@@ -8,6 +8,9 @@
 #ifndef TOOLS_H
 #define TOOLS_H
 
+// this file should be 'details/range_utility.hpp'
+// and included in range.hpp directly.
+
 template <typename A>
 struct array_info;
 
