@@ -190,7 +190,7 @@ int main()
 				range(1, 10))) << std::endl;
 
 	std::cout << "filter ---" << std::endl;
-	for (auto x: filter([](int v){ return v > 5 and v < 8; }, range(1, 10))) {
+	for (auto x: filter([](int v){ return v >= 5 and v <= 8; }, range(1, 10))) {
 		std::cout << x << std::endl;
 	}
 }

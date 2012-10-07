@@ -46,7 +46,7 @@ struct getter<0, T, Ts...> {
 		return t._p_value;
 	}
 	static T get(const tuple<T, Ts...>& t) {
-		return t._p_value;
+		return std::forward<T>(t._p_value);
 	}
 };
 
@@ -91,16 +91,15 @@ struct tuple<T, Ts...>: tuple<Ts...> {
 
 		T _p_value; // everything is public (first for gcc whining), and
 		// anyway, making this attribute public as well as inheriting in public
-		// make everything simply far easier. Who care about diving into some
+		// makes everything simply far easier. Who care about diving into some
 		// private implementation details shit anyway?
-		// who cares if somebody can cast the poor tuple and break everything!
 
 		tuple() = default;
 
 		// some magic with rvalues my friend.
 		template <typename U, typename... Us,
-				 // this little enable_if is the tricks
-				 // to avoid interference with second constructor.
+				 // this little enable_if is the tricks to avoid interference
+				 // with the second constructor.
 				 typename = typename std::enable_if<
 					 sizeof... (Ts) == sizeof... (Us)
 					 >::type>
