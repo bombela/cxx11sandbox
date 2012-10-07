@@ -137,7 +137,7 @@ template <typename R>
 struct Enumerator: public R {
 	typedef tuple<size_t, typename range_info<R>::type> tuple_t;
 
-	Enumerator(R r): R(r), _idx(0) {}
+	Enumerator(R r, size_t start): R(r), _idx(start) {}
 
 	void pop_front() { R::pop_front(); ++_idx; }
 	tuple_t front() {
@@ -156,7 +156,7 @@ struct Enumerator: public R {
 };
 
 template <typename R>
-Enumerator<R> enumerate(R r) { return r; }
+Enumerator<R> enumerate(R r, size_t start=0) { return {r, start}; }
 
 // the best part, zip 1 to N ranges!
 // extract an item from every ranges and return them as a tuple. Every
