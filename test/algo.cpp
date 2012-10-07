@@ -11,6 +11,7 @@
 #include "tools.hpp"
 #include "tuple.hpp"
 #include "range.hpp"
+#include "lambdaexpr.hpp"
 
 #include "cxxabi.cpp"
 #define TN(x) typeName<decltype(x)>()
@@ -189,8 +190,17 @@ int main()
 			map([](const int& v) { return v * 10; },
 				range(1, 10))) << std::endl;
 
+	std::cout << "map/reduce lambda expr ---" << std::endl;
+	std::cout << reduce(_1 + _2, map(_1 * 10, range(1, 10))) << std::endl;
+
 	std::cout << "filter ---" << std::endl;
 	for (auto x: filter([](int v){ return v >= 5 and v <= 8; }, range(1, 10))) {
 		std::cout << x << std::endl;
 	}
+
+	std::cout << "filter with lambda expr ---" << std::endl;
+	for (auto x: filter(_1 >= 5 and _1 <= 8, range(1, 10))) {
+		std::cout << x << std::endl;
+	}
+
 }
