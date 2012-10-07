@@ -208,20 +208,15 @@ struct expression {
 #define DEFINE_BINARY_OPERATOR(_op, _op_functor) \
 template <typename A, typename B, \
 		typename = typename std::enable_if< \
-				is_an_expression<A>::value and not is_an_expression<B>::value \
+				is_an_expression<A>::value or is_an_expression<B>::value \
 			>::type \
 	> \
 	auto _op(const A& a, const B& b) \
-	-> decltype(make_binary_expression<_op_functor>(a, make_expression(b))) { \
-	return make_binary_expression<_op_functor>(a, make_expression(b)); \
-} \
-template <typename A, typename B, typename = typename std::enable_if< \
-	is_an_expression<B>::value>::type \
-	> \
-	auto _op(const A& a, const B& b) \
-		-> decltype(make_binary_expression<_op_functor>(make_expression(a), b)) { \
-		return make_binary_expression<_op_functor>(make_expression(a), b); \
-	}
+	-> decltype(make_binary_expression<_op_functor>( \
+				make_expression(a), make_expression(b))) { \
+	return make_binary_expression<_op_functor>( \
+			make_expression(a), make_expression(b)); \
+}
 
 DEFINE_BINARY_OPERATOR(operator +  , ops::add);
 DEFINE_BINARY_OPERATOR(operator -  , ops::sub);
