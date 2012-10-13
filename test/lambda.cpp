@@ -72,6 +72,12 @@ struct V {
 			"]" << std::endl;
 		return *this;
 	}
+	V& operator--() {
+		auto b = _v--;
+		std::cout << "--V(" << b << ") => " << _v << " [" << this <<
+			"]" << std::endl;
+		return *this;
+	}
 };
 
 
@@ -148,7 +154,7 @@ int main()
 	{
 		std::cout << "-- test 11" << std::endl;
 		V v(2);
-		auto&& a = (_2 + ++_2)(V{42}, v);
+		auto&& a = (--_2 + ++_2)(V{42}, v);
 		std::cout << a._v << " [" << &a << "]" << std::endl;
 	}
 	{

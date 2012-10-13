@@ -88,7 +88,7 @@ struct ArrayRange {
 
 template <typename T>
 ArrayRange<typename array_info<T>::type> arange(T& a) {
-	return ArrayRange<typename array_info<T>::type>(a, array_info<T>::size);
+	return {a, array_info<T>::size};
 };
 
 // constify a range (add a const qualifier to front & back)
@@ -210,6 +210,87 @@ struct Zipper {
 
 template <typename... Ranges>
 Zipper<Ranges...> zip(Ranges... rs) { return Zipper<Ranges...>(rs...); }
+
+
+template <typename FV, typename... Ranges>
+struct LongZipper {
+	typedef FV const& fillval_t;
+	// because of the C++11 reference collapsing rules, and
+	// the fact that const cannot be applied to a reference:
+	// T& => T&, T&& => const T&, const T& => const T&
+	fillval_t fillval;
+	tuple<Ranges...> ranges;
+
+	template <typename T>
+		struct range_type {
+			// the constness of fillval is reported to the type returned by the
+			// range.
+			typedef typename range_info<T>::type _range_type;
+			typedef typename
+				std::conditional<
+					// if
+					std::is_const<
+						typename std::remove_reference<fillval_t>::type
+					>::value and std::is_reference<_range_type>::value,
+					// then
+					typename std::remove_reference<_range_type>::type const&,
+					// else
+					typename range_info<T>::type
+				>::type type;
+		};
+
+	typedef tuple<typename range_type<Ranges>::type...> return_type;
+
+	LongZipper(FV&& fillval, Ranges... rs):
+		fillval(std::forward<FV>(fillval)), ranges(rs...) {}
+
+	struct empty_reduce {
+		template <typename T2>
+			bool operator()(bool a, const T2& range) {
+				return a and range.empty();
+			}
+	};
+
+	bool empty() const {
+		return tuple_reduce(empty_reduce(), this->ranges, true);
+	}
+
+	struct front_map {
+		FV const& fillval;
+		template <typename T>
+			auto operator()(T range)
+			-> typename range_type<T>::type {
+				return range.empty() ? fillval : range.front();
+			}
+	};
+
+	return_type front() {
+		return return_type(tuple_map_tag, front_map{fillval}, ranges);
+	}
+
+	struct pop_front_foreach {
+		template <typename T>
+			void operator()(T& range) {
+				if (not range.empty()) {
+					range.pop_front();
+				}
+			}
+	};
+
+	void pop_front() {
+		tuple_foreach(this->ranges, pop_front_foreach());
+	}
+};
+
+//template <typename FV, typename... Ranges>
+//LongZipper<FV, Ranges...> longzip(const FV& fillval, Ranges... rs) {
+//    return LongZipper<FV, Ranges...>(fillval, rs...);
+//}
+
+template <typename FV, typename... Ranges>
+LongZipper<FV, Ranges...> longzip(FV&& fillval, Ranges... rs) {
+	return LongZipper<FV, Ranges...>(std::forward<FV>(fillval), rs...);
+}
 
 
 // map a function to a range

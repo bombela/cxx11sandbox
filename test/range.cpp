@@ -7,12 +7,12 @@
 #include <iostream>
 #include <list>
 
+#include "cxxabi.cpp"
+#define TN(x) typeName<decltype(x)>()
+
 #include <tools.hpp>
 #include <tuple.hpp>
 #include <range.hpp>
-
-#include "cxxabi.cpp"
-#define TN(x) typeName<decltype(x)>()
 
 // stride
 // one day, implement stride algo.
@@ -55,10 +55,10 @@ struct V {
 };
 
 
-	struct {
-		template <typename T>
-			T operator()(T v) { return v * 2; }
-	} op;
+struct {
+	template <typename T>
+		T operator()(T v) { return v * 2; }
+} op;
 
 
 int main()
@@ -165,6 +165,33 @@ int main()
 	std::cout << "back enumerate ---" << std::endl;
 	for (auto e: reverse(enumerate(arange(a2)))) {
 		std::cout << e.first() << ", " << e.second() << std::endl;
+	}
+
+	std::cout << "longzip ---" << std::endl;
+	for (auto e: longzip(42, arange(a), arange(a2))) {
+		std::cout << e << std::endl;
+	}
+
+	std::cout << "longzip2 ---" << std::endl;
+	const int lzv = 3;
+	for (auto e: longzip(lzv, arange(a), arange(a2))) {
+		std::cout << e << std::endl;
+	}
+
+	std::cout << "longzip3 ---" << std::endl;
+	int lzvrw = 777;
+	for (auto e: longzip(lzvrw, arange(a), arange(a2))) {
+		std::cout << e << std::endl;
+		get<0>(e) += 1;
+	}
+	std::cout << "-" << std::endl;
+	for (auto e: longzip(999, arange(a), arange(a2))) {
+		std::cout << e << std::endl;
+	}
+
+	std::cout << "longzip many ranges ---" << std::endl;
+	for (auto e: longzip(-1, range(5), range(3), range(7), range(1))) {
+		std::cout << e << std::endl;
 	}
 	return 0;
 }
